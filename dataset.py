@@ -46,28 +46,27 @@ def _data_source(path,folrgb,follabel, width, height, parallel_calls, augment):
         return image_decoded
 
     def parse_function(data_path, label_path):
-        #with tf.device('/cpu:0'):
-        data = read_image(data_path, width, height, 3)
-        label = read_image(label_path, width, height,3)
-        label=tf.reshape(label[:,:,0],[256,512,1])
+        with tf.device('/cpu:0'):
+            data = read_image(data_path, width, height, 3)
+            label = read_image(label_path, width, height,3)
+            label=tf.reshape(label[:,:,0],[256,512,1])
 
-        def augment_func(img):
-            img = tf.image.random_brightness(img, max_delta=16. / 255.)
-            img = tf.image.random_contrast(img, lower=0.75, upper=1.25)
-            img = tf.image.random_saturation(img, lower=0.75, upper=1.25)
-            img = tf.image.random_hue(img, max_delta=0.1)
-            return img
+            def augment_func(img):
+                img = tf.image.random_brightness(img, max_delta=16. / 255.)
+                img = tf.image.random_contrast(img, lower=0.75, upper=1.25)
+                img = tf.image.random_saturation(img, lower=0.75, upper=1.25)
+                img = tf.image.random_hue(img, max_delta=0.1)
+                return img
 
-        if augment:
-            data = augment_func(data)
-            data, label = tf.cond(tf.greater(tf.random_uniform([], 0, 1), 0.5),
-                                  lambda: (data, label),
-                                  lambda: (tf.image.flip_left_right(data), tf.image.flip_left_right(label)))
-        data = tf.image.convert_image_dtype(data, tf.float32)
-        data = tf.transpose(data, [2, 0, 1])
-        label = tf.transpose(label, [2, 0, 1])
-        return data, label, data_path
-
+            if augment:
+                data = augment_func(data)
+                data, label = tf.cond(tf.greater(tf.random_uniform([], 0, 1), 0.5),
+                                      lambda: (data, label),
+                                      lambda: (tf.image.flip_left_right(data), tf.image.flip_left_right(label)))
+            data = tf.image.convert_image_dtype(data, tf.float32)
+            data = tf.transpose(data, [2, 0, 1])
+            label = tf.transpose(label, [2, 0, 1])
+            return data, label, data_path
 
 
     data_files = get_conditional_files(path, folrgb)
